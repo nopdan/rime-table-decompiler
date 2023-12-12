@@ -3,13 +3,12 @@
 //
 #include <codepage.h>
 #include <rime/dict/table.h>
-#include <fstream>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <ios>
 #include <iostream>
 #include <string>
-
 
 // usage:
 //   rime_table_decompiler <rime-table-file> [save-path]
@@ -103,6 +102,7 @@ int main(int argc, char* argv[]) {
   bool success = table.Load();
   if (!success) {
     std::cerr << "Failed to load table." << std::endl;
+    system("pause");
     SetConsoleOutputCodePage(codepage);
     return 1;
   }
@@ -118,6 +118,7 @@ int main(int argc, char* argv[]) {
   fout.open(outputName);
   if (!fout.is_open()) {
     std::cerr << "Failed to open file " << outputName << std::endl;
+    system("pause");
     SetConsoleOutputCodePage(codepage);
     return 1;
   }
@@ -142,6 +143,7 @@ int main(int argc, char* argv[]) {
             << "Date: 2023-12-12" << std::endl
             << "Repo: https://github.com/nopdan/rime-table-decompiler"
             << std::endl;
+  system("pause");
   SetConsoleOutputCodePage(codepage);
   return 0;
 }
