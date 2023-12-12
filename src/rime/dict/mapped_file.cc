@@ -7,35 +7,10 @@
 // 2011-06-30 GONG Chen <chen.sst@gmail.com>
 //
 #include <fstream>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include "mapped_file.h"
-
-#ifdef BOOST_RESIZE_FILE
-
-#define RESIZE_FILE boost::filesystem::resize_file
-
-#else
-
-#ifdef _WIN32
-#include <windows.h>
-#define RESIZE_FILE(P, SZ) (resize_file_api(P, SZ) != 0)
-static BOOL resize_file_api(const char* p, boost::uintmax_t size) {
-  HANDLE handle = CreateFileA(p, GENERIC_WRITE, 0, 0, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, 0);
-  LARGE_INTEGER sz;
-  sz.QuadPart = size;
-  return handle != INVALID_HANDLE_VALUE &&
-         ::SetFilePointerEx(handle, sz, 0, FILE_BEGIN) &&
-         ::SetEndOfFile(handle) && ::CloseHandle(handle);
-}
-#else
-#include <unistd.h>
-#define RESIZE_FILE(P, SZ) (::truncate(P, SZ) == 0)
-#endif  // _WIN32
-
-#endif  // BOOST_RESIZE_FILE
+#include <rime/dict/mapped_file.h>
 
 namespace rime {
 
@@ -126,7 +101,7 @@ void MappedFile::Close() {
 }
 
 bool MappedFile::Exists() const {
-  return boost::filesystem::exists(file_name_);
+  return std::filesystem::exists(file_name_);
 }
 
 bool MappedFile::IsOpen() const {
@@ -155,7 +130,7 @@ bool MappedFile::Resize(size_t capacity) {
   if (IsOpen())
     Close();
   try {
-    RESIZE_FILE(file_name_.c_str(), capacity);
+    std::filesystem::resize_file(file_name_.c_str(), capacity);
   } catch (...) {
     return false;
   }

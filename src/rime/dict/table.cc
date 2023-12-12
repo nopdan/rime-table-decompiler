@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <queue>
 #include <utility>
-#include "common.h"
-#include "table.h"
-//#include "syllabifier.h"
+#include <rime/common.h>
+// #include <rime/algo/syllabifier.h>
+#include <rime/dict/table.h>
 
 namespace rime {
 
@@ -548,50 +548,6 @@ TableAccessor Table::QueryPhrases(const Code& code) {
   }
   return query.Access(-1);
 }
-
-
-// bool Table::Query(const SyllableGraph& syll_graph,
-//                   size_t start_pos,
-//                   TableQueryResult* result) {
-//   if (!result || !index_ || start_pos >= syll_graph.interpreted_length)
-//     return false;
-//   result->clear();
-//   std::queue<pair<size_t, TableQuery>> q;
-//   TableQuery initial_state(index_);
-//   q.push({start_pos, initial_state});
-//   while (!q.empty()) {
-//     size_t current_pos = q.front().first;
-//     TableQuery query(q.front().second);
-//     q.pop();
-//     auto index = syll_graph.indices.find(current_pos);
-//     if (index == syll_graph.indices.end()) {
-//       continue;
-//     }
-//     if (query.level() == Code::kIndexCodeMaxLength) {
-//       TableAccessor accessor(query.Access(-1));
-//       if (!accessor.exhausted()) {
-//         (*result)[current_pos].push_back(accessor);
-//       }
-//       continue;
-//     }
-//     for (const auto& spellings : index->second) {
-//       SyllableId syll_id = spellings.first;
-//       TableAccessor accessor(query.Access(syll_id));
-//       for (auto props : spellings.second) {
-//         size_t end_pos = props->end_pos;
-//         if (!accessor.exhausted()) {
-//           (*result)[end_pos].push_back(accessor);
-//         }
-//         if (end_pos < syll_graph.interpreted_length &&
-//             query.Advance(syll_id, props->credibility)) {
-//           q.push({end_pos, query});
-//           query.Backdate();
-//         }
-//       }
-//     }
-//   }
-//   return !result->empty();
-// }
 
 string Table::GetEntryText(const table::Entry& entry) {
   return GetString(entry.text);
