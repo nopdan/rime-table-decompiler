@@ -2,10 +2,10 @@ name: Commit CI
 
 on:
   push:
-    paths:
-      - "src/**"
-      - "v3/**"
-      - "include/**"
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
 
 jobs:
   linux:
@@ -60,7 +60,7 @@ jobs:
       - name: Restore
         uses: actions/cache@v3
         with:
-          path: ~/.xmake
+          path: ~/AppData/Local/.xmake
           key: ${{ runner.os }}-xmake
 
       - name: Build
@@ -70,7 +70,7 @@ jobs:
       - name: Save
         uses: actions/cache@v3
         with:
-          path: ~/.xmake
+          path: ~/AppData/Local/.xmake
           key: ${{ runner.os }}-xmake
 
       - name: Upload
