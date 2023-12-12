@@ -19,7 +19,7 @@ Example: rime_table_decompiler pinyin.table.bin pinyin.dict.yaml
 
 > 注意：因为`xxx.table.bin`没有元数据信息，所以生成的`xxx.dict.yaml`的文件头中的元数据是根据常见的元数据填进去的，可能是错误的。用户需要自己进行修改。
 
-若输出 **"table format version 3 is no longer supported. please upgrade to version Rime::Table/4.0"**，可尝试使用 `rime_table_decompiler_v3`
+若输出 **"table format version 3 is no longer supported. please upgrade to version Rime::Table/4.0"**，可尝试使用 `rime_table_v3_decompiler`
 
 ## Build
 

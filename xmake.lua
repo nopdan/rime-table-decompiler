@@ -20,7 +20,7 @@ target("rime_table_decompiler", function()
     set_targetdir("build/bin/")
 end)
 
-target("rime_table_decompiler_v3", function()
+target("rime_table_v3_decompiler", function()
     set_languages("cxx17")
     set_kind("binary")
     add_files("src/rime_table_decompiler.cc")
