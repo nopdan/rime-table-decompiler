@@ -26,7 +26,7 @@ Example: rime_table_decompiler pinyin.table.bin pinyin.dict.yaml
 编译方法：(需要安装 xmake, unzip 等工具)
 
 ```bash
-git clone https://github.com/flowerime/rime-table-decompiler
+git clone https://github.com/nopdan/rime-table-decompiler
 cd rime-table-decompiler
 xmake
 ```
