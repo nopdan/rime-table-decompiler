@@ -1,9 +1,19 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("boost", {system = false})
+if is_plat("wasm") then
+    add_requires("boost[signals2] >=1.82.0", {system = false})
+else
+    add_requires("boost[signals2,interprocess,iostreams,container] >=1.82.0", {system = false})
+end
 add_requires("marisa")
-add_requires("glog")
+if not is_plat("wasm") then
+    add_requires("glog")
+end
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+if is_plat("wasm") then
+    add_requires("emscripten")
+    set_toolchains("emcc@emscripten")
+end
 
 target("rime_table_decompiler", function()
     set_languages("cxx17")
@@ -13,10 +23,14 @@ target("rime_table_decompiler", function()
     add_includedirs("src")
     add_includedirs("include")
 
-    add_defines("RIME_ENABLE_LOGGING")
-    add_packages("boost", {components = {"signals2", "interprocess", "iostreams"}})
+    if not is_plat("wasm") then
+        add_defines("RIME_ENABLE_LOGGING")
+    end
+    add_packages("boost")
     add_packages("marisa")
-    add_packages("glog")
+    if not is_plat("wasm") then
+        add_packages("glog")
+    end
     set_targetdir("build/bin/")
 end)
 
@@ -28,10 +42,39 @@ target("rime_table_v3_decompiler", function()
     add_includedirs("v3")
     add_includedirs("include")
 
-    add_defines("RIME_ENABLE_LOGGING", "TABLE_V3")
-    add_packages("glog")
-    add_packages("boost", {components = {"signals2", "interprocess", "iostreams"}})
+    if not is_plat("wasm") then
+        add_defines("RIME_ENABLE_LOGGING")
+    end
+    add_defines("TABLE_V3")
+    add_packages("boost")
     add_packages("marisa")
+    if not is_plat("wasm") then
+        add_packages("glog")
+    end
+    set_targetdir("build/bin/")
+end)
+
+target("rime_table_decompiler_wasm", function()
+    set_languages("cxx17")
+    set_kind("binary")
+    set_extension(".wasm")
+    add_files("src/rime_table_decompiler.cc")
+    add_files("src/rime/**.cc")
+    add_includedirs("src")
+    add_includedirs("include")
+
+    add_defines("RIME_WASM")
+    add_packages("boost")
+    add_packages("marisa")
+
+    if is_plat("wasm") then
+        add_ldflags("-sALLOW_MEMORY_GROWTH=1", {force = true})
+        add_ldflags("-sSTANDALONE_WASM=1", {force = true})
+        add_ldflags("-sEXPORTED_FUNCTIONS=['_decompile','_decompile_free','_malloc','_free']", {force = true})
+        add_ldflags("-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']", {force = true})
+        add_ldflags("-Wl,--no-entry", {force = true})
+        add_ldflags("-Wl,--export=__wasm_call_ctors", {force = true})
+    end
     set_targetdir("build/bin/")
 end)
 

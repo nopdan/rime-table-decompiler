@@ -1,13 +1,19 @@
 // rime_table_decompiler.cc
 // nopdan <me@nopdan.com>
 //
+#ifndef RIME_WASM
 #include <codepage.h>
+#endif
 #include <rime/dict/table.h>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 // usage:
@@ -15,39 +21,39 @@
 // example:
 //   rime_table_decompiler pinyin.table.bin pinyin.dict.yaml
 
-void outCode(rime::Table* table, const rime::Code code, std::ofstream& fout) {
+void outCode(rime::Table* table, const rime::Code code, std::ostream& out) {
   if (code.empty()) {
     return;
   }
   auto item = code.begin();
-  fout << table->GetSyllableById(*item);
+  out << table->GetSyllableById(*item);
   item++;
   for (; item != code.end(); ++item) {
-    fout << " ";
-    fout << table->GetSyllableById(*item);
+    out << " ";
+    out << table->GetSyllableById(*item);
   }
   return;
 }
 
 void access(rime::Table* table,
             rime::TableAccessor accessor,
-            std::ofstream& fout) {
+            std::ostream& out) {
   while (!accessor.exhausted()) {
     auto word = table->GetEntryText(*accessor.entry());
-    fout << word << "\t";
-    outCode(table, accessor.code(), fout);
+    out << word << "\t";
+    outCode(table, accessor.code(), out);
 
     auto weight = accessor.entry()->weight;
 #ifdef TABLE_V3
     if (weight > 0) {
-      fout << "\t" << weight;
+      out << "\t" << weight;
     }
 #else
     if (weight >= 0) {
-      fout << "\t" << exp(weight);
+      out << "\t" << exp(weight);
     }
 #endif
-    fout << std::endl;
+    out << std::endl;
     accessor.Next();
   }
 }
@@ -55,33 +61,104 @@ void access(rime::Table* table,
 // recursively traverse table
 void recursion(rime::Table* table,
                rime::TableQuery* query,
-               std::ofstream& fout) {
+               std::ostream& out) {
   for (int i = 0; i < table->metadata()->num_syllables; i++) {
     auto accessor = query->Access(i);
-    access(table, accessor, fout);
+    access(table, accessor, out);
     if (query->Advance(i)) {
       if (query->level() < 3) {
-        recursion(table, query, fout);
+        recursion(table, query, out);
       } else {
         auto accessor = query->Access(0);
-        access(table, accessor, fout);
+        access(table, accessor, out);
       }
       query->Backdate();
     }
   }
 }
 
-void traversal(rime::Table* table, std::ofstream& fout) {
+void traversal(rime::Table* table, std::ostream& out) {
   auto metadata = table->metadata();
+#ifndef RIME_WASM
   std::cout << "num_syllables: " << metadata->num_syllables << std::endl;
   std::cout << "num_entries: " << metadata->num_entries << std::endl;
+#endif
 
-  fout << std::fixed;
-  fout << std::setprecision(0);
   rime::TableQuery query(table->metadata()->index.get());
-  recursion(table, &query, fout);
+  recursion(table, &query, out);
 }
 
+void writeHeader(const std::string& name, std::ostream& out) {
+  out << "# Rime dictionary\n\n";
+  out << "---\n"
+         "name: "
+      << name
+      << "\n"
+         "version: \"1.0\"\n"
+         "...\n\n";
+}
+
+bool decompileTable(rime::Table* table,
+                    const std::string& name,
+                    std::ostream& out) {
+  out << std::fixed;
+  out << std::setprecision(0);
+  writeHeader(name, out);
+  traversal(table, out);
+  return true;
+}
+
+#ifdef RIME_WASM
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+extern "C" {
+
+#ifdef __EMSCRIPTEN__
+EMSCRIPTEN_KEEPALIVE
+#endif
+uint8_t* decompile(const uint8_t* data, size_t size, size_t* out_size) {
+  if (!out_size) {
+    return nullptr;
+  }
+  *out_size = 0;
+  if (!data || size == 0) {
+    return nullptr;
+  }
+
+  rime::Table table("<memory>");
+  if (!table.LoadFromMemory(data, size)) {
+    return nullptr;
+  }
+
+  std::ostringstream out;
+  decompileTable(&table, "rime_table", out);
+  std::string output = out.str();
+  if (output.empty()) {
+    return nullptr;
+  }
+
+  auto* buffer = static_cast<uint8_t*>(std::malloc(output.size()));
+  if (!buffer) {
+    return nullptr;
+  }
+  std::memcpy(buffer, output.data(), output.size());
+  *out_size = output.size();
+  return buffer;
+}
+
+#ifdef __EMSCRIPTEN__
+EMSCRIPTEN_KEEPALIVE
+#endif
+void decompile_free(uint8_t* ptr) {
+  std::free(ptr);
+}
+
+}  // extern "C"
+#endif
+
+#ifndef RIME_WASM
 int main(int argc, char* argv[]) {
   unsigned int codepage = SetConsoleOutputCodePage();
   if (argc < 2 || argc > 3) {
@@ -128,14 +205,7 @@ int main(int argc, char* argv[]) {
   if (std::string::npos != last_slash_idx) {
     fileName.erase(0, last_slash_idx + 1);
   }
-  fout << "# Rime dictionary\n\n";
-  fout << "---\n"
-          "name: "
-       << fileName
-       << "\n"
-          "version: \"1.0\"\n"
-          "...\n\n";
-  traversal(&table, fout);
+  decompileTable(&table, fileName, fout);
   fout.close();
   std::cout << "Save to: " << outputName << std::endl
             << std::endl
@@ -147,3 +217,4 @@ int main(int argc, char* argv[]) {
   SetConsoleOutputCodePage(codepage);
   return 0;
 }
+#endif

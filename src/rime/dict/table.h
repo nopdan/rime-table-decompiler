@@ -166,6 +166,7 @@ class Table : public MappedFile {
   virtual ~Table();
 
   RIME_API bool Load();
+  RIME_API bool LoadFromMemory(const void* data, size_t size);
   RIME_API bool Save();
   RIME_API bool Build(const Syllabary& syllabary,
                       const Vocabulary& vocabulary,
@@ -204,6 +205,7 @@ class Table : public MappedFile {
   bool OnBuildStart();
   bool OnBuildFinish();
   bool OnLoad();
+  bool LoadFromOpenMapping();
 
  protected:
   table::Metadata* metadata_ = nullptr;

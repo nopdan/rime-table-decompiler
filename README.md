@@ -30,3 +30,19 @@ git clone https://github.com/nopdan/rime-table-decompiler
 cd rime-table-decompiler
 xmake
 ```
+
+## WASM
+
+使用 emscripten 编译：
+
+```bash
+xmake f -p wasm
+xmake build rime_table_decompiler_wasm
+```
+
+导出函数：
+
+- `decompile(input_ptr, input_len, out_len_ptr) -> output_ptr`
+- `decompile_free(output_ptr)`
+
+输出是 UTF-8 的 `yaml` 字节数组，调用方负责释放返回的内存。

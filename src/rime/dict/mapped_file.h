@@ -87,6 +87,7 @@ class RIME_API MappedFile {
 
   bool Create(size_t capacity);
   bool OpenReadOnly();
+  bool OpenReadOnlyFromMemory(const void* data, size_t size);
   bool OpenReadWrite();
   bool Flush();
   bool Resize(size_t capacity);
@@ -124,6 +125,9 @@ class RIME_API MappedFile {
   string file_name_;
   size_t size_ = 0;
   the<MappedFileImpl> file_;
+  char* memory_address_ = nullptr;
+  size_t memory_size_ = 0;
+  bool is_memory_open_ = false;
 };
 
 // member function definitions

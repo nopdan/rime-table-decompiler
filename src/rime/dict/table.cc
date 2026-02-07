@@ -261,6 +261,25 @@ bool Table::Load() {
     return false;
   }
 
+  return LoadFromOpenMapping();
+}
+
+bool Table::LoadFromMemory(const void* data, size_t size) {
+  LOG(INFO) << "loading table from memory buffer.";
+
+  if (IsOpen())
+    Close();
+
+  if (!OpenReadOnlyFromMemory(data, size)) {
+    LOG(ERROR) << "Error opening table from memory buffer.";
+    return false;
+  }
+
+  return LoadFromOpenMapping();
+}
+
+bool Table::LoadFromOpenMapping() {
+
   metadata_ = Find<table::Metadata>(0);
   if (!metadata_) {
     LOG(ERROR) << "metadata not found.";
